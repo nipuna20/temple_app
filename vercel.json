@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "templeappbackend-production-727f.up.railway.app/api/:path*"
+      "destination": "https://templeappbackend-production-727f.up.railway.app/api/health/api/:path*"
     },
     {
       "source": "/(.*)",
