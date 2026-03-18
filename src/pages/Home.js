@@ -6,8 +6,8 @@ import {
   Container,
   Button,
   Chip,
-  Stack, 
-  keyframes
+  Stack,
+  keyframes,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -18,6 +18,65 @@ const truncateWords = (text, count = 15) => {
   return `${words.slice(0, count).join(" ")}...`;
 };
 
+const heroSectionHeightSx = {
+  position: "relative",
+  width: "100%",
+  overflow: "hidden",
+  height: "calc(100vh - 72px)",
+  minHeight: "calc(100vh - 72px)",
+  "@media (min-width:900px)": {
+    height: "calc(100vh - 80px)",
+    minHeight: "calc(100vh - 80px)",
+  },
+  "@supports (height: 100svh)": {
+    height: "calc(100svh - 72px)",
+    minHeight: "calc(100svh - 72px)",
+    "@media (min-width:900px)": {
+      height: "calc(100svh - 80px)",
+      minHeight: "calc(100svh - 80px)",
+    },
+  },
+  "@supports (height: 100dvh)": {
+    height: "calc(100dvh - 72px)",
+    minHeight: "calc(100dvh - 72px)",
+    "@media (min-width:900px)": {
+      height: "calc(100dvh - 80px)",
+      minHeight: "calc(100dvh - 80px)",
+    },
+  },
+};
+
+const heroInnerHeightSx = {
+  position: "relative",
+  zIndex: 1,
+  height: "calc(100vh - 72px)",
+  minHeight: "calc(100vh - 72px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  px: { xs: 2, md: 4 },
+  "@media (min-width:900px)": {
+    height: "calc(100vh - 80px)",
+    minHeight: "calc(100vh - 80px)",
+  },
+  "@supports (height: 100svh)": {
+    height: "calc(100svh - 72px)",
+    minHeight: "calc(100svh - 72px)",
+    "@media (min-width:900px)": {
+      height: "calc(100svh - 80px)",
+      minHeight: "calc(100svh - 80px)",
+    },
+  },
+  "@supports (height: 100dvh)": {
+    height: "calc(100dvh - 72px)",
+    minHeight: "calc(100dvh - 72px)",
+    "@media (min-width:900px)": {
+      height: "calc(100dvh - 80px)",
+      minHeight: "calc(100dvh - 80px)",
+    },
+  },
+};
 
 const SplitInfoSection = ({
   title,
@@ -381,7 +440,13 @@ const TempleHoursSection = () => {
   ];
 
   return (
-    <Box sx={{ backgroundColor: "#190c2f", py: { xs: 7, md: 10 }, mt: { xs: 6, md: 8 } }}>
+    <Box
+      sx={{
+        backgroundColor: "#190c2f",
+        py: { xs: 7, md: 10 },
+        mt: { xs: 6, md: 8 },
+      }}
+    >
       <Box sx={{ textAlign: "center", px: { xs: 3, md: 6 } }}>
         <Box
           component="img"
@@ -475,17 +540,18 @@ const HeroSlideshow = () => {
             inset: 0,
             backgroundImage: `url(${image})`,
             backgroundSize: "cover",
-            backgroundPosition: "center",
-            transform: i === index ? "scale(1.02)" : "scale(1.06)",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
             opacity: i === index ? 1 : 0,
+            transform: i === index ? "scale(1.02)" : "scale(1.06)",
             transition: "opacity 1000ms ease, transform 1400ms ease",
+            willChange: "opacity, transform",
           }}
         />
       ))}
     </>
   );
 };
-
 
 const heroTextFloat = keyframes`
   0% {
@@ -499,7 +565,10 @@ const heroTextFloat = keyframes`
 `;
 
 const Home = () => {
-  const [visionMission, setVisionMission] = useState({ vision: "", mission: "" });
+  const [visionMission, setVisionMission] = useState({
+    vision: "",
+    mission: "",
+  });
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
@@ -522,13 +591,7 @@ const Home = () => {
   return (
     <Box sx={{ backgroundColor: "#0f0726" }}>
       {/* HERO */}
-      <Box
-        sx={{
-          position: "relative",
-          minHeight: { xs: 500, md: 730 },
-          overflow: "hidden",
-        }}
-      >
+      <Box sx={heroSectionHeightSx}>
         <HeroSlideshow />
 
         <Box
@@ -540,19 +603,7 @@ const Home = () => {
           }}
         />
 
-        <Container
-          maxWidth="lg"
-          sx={{
-            position: "relative",
-            zIndex: 1,
-            minHeight: { xs: 420, md: 620 },
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            px: { xs: 2, md: 4 },
-          }}
-        >
+        <Container maxWidth="lg" sx={heroInnerHeightSx}>
           <Box sx={{ maxWidth: 920 }}>
             <Typography
               sx={{
@@ -638,7 +689,8 @@ const Home = () => {
               }}
             >
               Discover our upcoming gatherings, teachings, and community events.
-              Join us to experience mindfulness, compassion, and shared spiritual growth.
+              Join us to experience mindfulness, compassion, and shared spiritual
+              growth.
             </Typography>
 
             {events.length === 0 ? (
