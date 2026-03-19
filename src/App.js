@@ -25,6 +25,7 @@ import Profile from "./pages/Profile";
 import EventRegister from "./pages/EventRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Notifications from "./pages/Notifications";
+import CommunityPostDetails from "./pages/CommunityPostDetails";
 
 const App = () => {
   return (
@@ -97,6 +98,8 @@ const App = () => {
                 </PrivateRoute>
               }
             />
+
+            <Route path="/community/:id" element={<CommunityPostDetails />} />
           </Routes>
         </Box>
 

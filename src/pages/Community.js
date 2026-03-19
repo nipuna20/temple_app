@@ -13,7 +13,9 @@ import {
   TextField,
   Skeleton,
   Divider,
+  CardActionArea,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import Chat from "../components/Chat";
 
@@ -49,7 +51,6 @@ const Community = () => {
 
   return (
     <Box sx={{ backgroundColor: "#0f0726", minHeight: "100vh" }}>
-      {/* Hero Header */}
       <Box
         sx={{
           position: "relative",
@@ -93,11 +94,16 @@ const Community = () => {
             Community & Gallery
           </Typography>
 
-          <Typography sx={{ color: "rgba(255,255,255,0.72)", maxWidth: 780, lineHeight: 1.8 }}>
+          <Typography
+            sx={{
+              color: "rgba(255,255,255,0.72)",
+              maxWidth: 780,
+              lineHeight: 1.8,
+            }}
+          >
             Explore highlights from past events and connect with the community through discussions.
           </Typography>
 
-          {/* Search */}
           <Box sx={{ mt: 3, maxWidth: 520 }}>
             <TextField
               value={q}
@@ -112,7 +118,9 @@ const Community = () => {
                   px: 1.5,
                   "& fieldset": { borderColor: "rgba(255,255,255,0.14)" },
                   "&:hover fieldset": { borderColor: "rgba(255,255,255,0.28)" },
-                  "&.Mui-focused fieldset": { borderColor: "rgba(240,195,74,0.65)" },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "rgba(240,195,74,0.65)",
+                  },
                 },
               }}
             />
@@ -120,7 +128,6 @@ const Community = () => {
         </Container>
       </Box>
 
-      {/* Body */}
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
         <Grid container spacing={3}>
           {loading ? (
@@ -147,14 +154,22 @@ const Community = () => {
               </Box>
             </Grid>
           ) : (
-            filtered.map((post) => {
-              const hasMedia = post.mediaUrls && post.mediaUrls.length > 0;
+            filtered.map((post, index) => {
+              const postId = post.id || post._id;
+              const media =
+                Array.isArray(post.mediaUrls)
+                  ? post.mediaUrls
+                  : typeof post.mediaUrls === "string"
+                    ? post.mediaUrls.split(",").map((item) => item.trim()).filter(Boolean)
+                    : [];
+
+              const hasMedia = media.length > 0;
               const cover =
-                (hasMedia && post.mediaUrls[0]) ||
+                media[0] ||
                 "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1400&q=80";
 
               return (
-                <Grid item xs={12} sm={6} md={4} key={post.id}>
+                <Grid item xs={12} sm={6} md={4} key={postId || index}>
                   <Card
                     sx={{
                       height: "100%",
@@ -170,42 +185,59 @@ const Community = () => {
                       },
                     }}
                   >
-                    <CardMedia component="img" height="200" image={cover} alt={post.title} />
+                    <CardActionArea
+                      component={RouterLink}
+                      to={`/community/${postId}`}
+                      sx={{ height: "100%" }}
+                    >
+                      <CardMedia component="img" height="200" image={cover} alt={post.title} />
 
-                    <CardContent sx={{ p: 2.5 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                        <Chip
-                          label={hasMedia ? "Gallery" : "Update"}
-                          size="small"
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          sx={{ mb: 1 }}
+                        >
+                          <Chip
+                            label={hasMedia ? "Gallery" : "Update"}
+                            size="small"
+                            sx={{
+                              backgroundColor: "rgba(255,255,255,0.18)",
+                              color: "rgba(255,255,255,0.92)",
+                              fontWeight: 800,
+                            }}
+                          />
+                          {post.createdAt && (
+                            <Typography sx={{ color: "rgba(255,255,255,0.70)", fontSize: 12 }}>
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </Typography>
+                          )}
+                        </Stack>
+
+                        <Typography
                           sx={{
-                            backgroundColor: "rgba(255,255,255,0.18)",
                             color: "rgba(255,255,255,0.92)",
                             fontWeight: 800,
+                            fontSize: 16,
+                            mb: 1,
                           }}
-                        />
-                        {post.createdAt && (
-                          <Typography sx={{ color: "rgba(255,255,255,0.70)", fontSize: 12 }}>
-                            {new Date(post.createdAt).toLocaleDateString()}
-                          </Typography>
-                        )}
-                      </Stack>
+                        >
+                          {post.title}
+                        </Typography>
 
-                      <Typography
-                        sx={{
-                          color: "rgba(255,255,255,0.92)",
-                          fontWeight: 800,
-                          fontSize: 16,
-                          mb: 1,
-                        }}
-                      >
-                        {post.title}
-                      </Typography>
-
-                      <Typography sx={{ color: "rgba(255,255,255,0.75)", fontSize: 14, lineHeight: 1.7 }}>
-                        {(post.description || "").slice(0, 120)}
-                        {(post.description || "").length > 120 ? "..." : ""}
-                      </Typography>
-                    </CardContent>
+                        <Typography
+                          sx={{
+                            color: "rgba(255,255,255,0.75)",
+                            fontSize: 14,
+                            lineHeight: 1.7,
+                          }}
+                        >
+                          {(post.description || "").slice(0, 120)}
+                          {(post.description || "").length > 120 ? "..." : ""}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
                   </Card>
                 </Grid>
               );
@@ -213,8 +245,7 @@ const Community = () => {
           )}
         </Grid>
 
-        {/* Chat panel */}
-        <Box sx={{ mt: { xs: 5, md: 7 } }}>
+        {/* <Box sx={{ mt: { xs: 5, md: 7 } }}>
           <Typography
             sx={{
               fontFamily: `"Georgia","Times New Roman",serif`,
@@ -244,13 +275,11 @@ const Community = () => {
             ) : (
               <Box sx={{ color: "rgba(255,255,255,0.75)" }}>
                 <Divider sx={{ borderColor: "rgba(255,255,255,0.10)", mb: 2 }} />
-                <Typography>
-                  Log in to participate in the community chat.
-                </Typography>
+                <Typography>Log in to participate in the community chat.</Typography>
               </Box>
             )}
           </Box>
-        </Box>
+        </Box> */}
       </Container>
     </Box>
   );
