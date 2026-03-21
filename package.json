@@ -4,8 +4,8 @@
   "private": true,
   "description": "Professional front-end for Buddhist temple website",
   "scripts": {
-    "start": "webpack serve --mode development --open",
-    "build": "webpack --mode production"
+    "start": "node init && webpack serve --mode development --open",
+    "build": "node init && webpack --mode production"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

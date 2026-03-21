@@ -26,6 +26,7 @@ import EventRegister from "./pages/EventRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Notifications from "./pages/Notifications";
 import CommunityPostDetails from "./pages/CommunityPostDetails";
+import PoyaCalendar from "./pages/PoyaCalendar";
 
 const App = () => {
   return (
@@ -62,6 +63,7 @@ const App = () => {
             <Route path="/dana" element={<Dana />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/poya-calendar" element={<PoyaCalendar />} />
 
             <Route
               path="/donate-monthly"

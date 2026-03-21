@@ -76,6 +76,35 @@ const EventDetails = () => {
     }
   }, [id]);
 
+  const getOrdinalDay = (day) => {
+    if (day > 3 && day < 21) return `${day}th`;
+
+    switch (day % 10) {
+      case 1:
+        return `${day}st`;
+      case 2:
+        return `${day}nd`;
+      case 3:
+        return `${day}rd`;
+      default:
+        return `${day}th`;
+    }
+  };
+
+  const formatEventDate = (dateString) => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    return `${months[date.getMonth()]}/${getOrdinalDay(date.getDate())}/${date.getFullYear()}`;
+  };
+
   useEffect(() => {
     const loadAll = async () => {
       try {
@@ -150,9 +179,8 @@ const EventDetails = () => {
       />
 
       <Typography variant="body1" sx={{ mt: 2 }}>
-        Registration deadline: {new Date(event.registrationDeadline).toLocaleDateString()}
+        Event Date: {formatEventDate(event.registrationDeadline)}
       </Typography>
-
       {isPaidEvent ? (
         <Typography variant="body1" sx={{ mt: 1 }}>
           <strong>Fee:</strong> ${event.amount}

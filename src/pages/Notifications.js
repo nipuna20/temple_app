@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext } from "react";
 import {
   Box,
   Typography,
@@ -7,24 +7,25 @@ import {
   CardActions,
   Button,
   Alert,
-} from '@mui/material';
-import { AuthContext } from '../contexts/AuthContext';
-import api from '../services/api';
+  Divider,
+} from "@mui/material";
+import { AuthContext } from "../contexts/AuthContext";
+import api from "../services/api";
 
 const Notifications = () => {
   const { user } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchNotifications = async () => {
     try {
-      setError('');
-      const res = await api.get('/notifications');
+      setError("");
+      const res = await api.get("/notifications");
       setNotifications(res.data || []);
     } catch (err) {
       console.error(err);
-      setError('Failed to load notifications');
+      setError("Failed to load notifications");
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ const Notifications = () => {
       await fetchNotifications();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Failed to submit your response');
+      setError(err.response?.data?.message || "Failed to submit your response");
     }
   };
 
@@ -56,18 +57,28 @@ const Notifications = () => {
       await fetchNotifications();
     } catch (err) {
       console.error(err);
-      setError('Failed to mark as read');
+      setError("Failed to mark as read");
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#0f0726', py: 6, px: 2 }}>
-      <Box sx={{ maxWidth: 900, mx: 'auto', color: 'white' }}>
-        <Typography sx={{ fontFamily: '"Georgia","Times New Roman",serif', fontSize: { xs: 28, md: 42 }, mb: 3 }}>
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#0f0726", py: 6, px: 2 }}>
+      <Box sx={{ maxWidth: 900, mx: "auto", color: "white" }}>
+        <Typography
+          sx={{
+            fontFamily: '"Georgia","Times New Roman",serif',
+            fontSize: { xs: 28, md: 42 },
+            mb: 3,
+          }}
+        >
           Notifications
         </Typography>
 
-        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
         {loading ? (
           <Typography>Loading...</Typography>
@@ -78,7 +89,7 @@ const Notifications = () => {
             const booking = notif.DanaBooking;
             const canRespond =
               booking &&
-              booking.requestStatus === 'pending' &&
+              booking.requestStatus === "pending" &&
               booking.userId === user?.id;
 
             return (
@@ -86,22 +97,137 @@ const Notifications = () => {
                 key={notif.id}
                 sx={{
                   mb: 2,
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'white',
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  color: "white",
                 }}
               >
                 <CardContent>
-                  <Typography sx={{ fontSize: 16 }}>{notif.message}</Typography>
+                  <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                    {notif.message}
+                  </Typography>
+
                   {booking && (
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
-                      {booking.mealType} - {new Date(booking.date).toLocaleDateString()} - request status: {booking.requestStatus}
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.75)" }}
+                      >
+                        {booking.mealType} - {new Date(booking.date).toLocaleDateString()} -
+                        {" "}request status: {booking.requestStatus}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.75)", mt: 0.5 }}
+                      >
+                        Admin status: {booking.status}
+                      </Typography>
+                    </Box>
                   )}
+
                   {booking?.requestMessage && (
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', mt: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "rgba(255,255,255,0.85)", mt: 1 }}
+                    >
                       Request message: {booking.requestMessage}
                     </Typography>
+                  )}
+
+                  {booking && (
+                    <>
+                      <Divider
+                        sx={{
+                          my: 1.5,
+                          borderColor: "rgba(255,255,255,0.12)",
+                        }}
+                      />
+
+                      <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                        Current Owner Details
+                      </Typography>
+
+                      {booking.User && (
+                        <>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "rgba(255,255,255,0.8)" }}
+                          >
+                            Name: {booking.User.firstName || "Unknown"} {booking.User.lastName || ""}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "rgba(255,255,255,0.8)" }}
+                          >
+                            Email: {booking.User.email || "-"}
+                          </Typography>
+                        </>
+                      )}
+
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.8)" }}
+                      >
+                        Address: {booking.ownerAddress || "-"}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.8)" }}
+                      >
+                        Mobile: {booking.ownerPhone || "-"}
+                      </Typography>
+
+                      {(booking.requestUser ||
+                        booking.requestAddress ||
+                        booking.requestPhone) && (
+                          <>
+                            <Divider
+                              sx={{
+                                my: 1.5,
+                                borderColor: "rgba(255,255,255,0.12)",
+                              }}
+                            />
+
+                            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                              Request User Details
+                            </Typography>
+
+                            {booking.requestUser && (
+                              <>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "rgba(255,255,255,0.8)" }}
+                                >
+                                  Name: {booking.requestUser.firstName || "Unknown"}{" "}
+                                  {booking.requestUser.lastName || ""}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "rgba(255,255,255,0.8)" }}
+                                >
+                                  Email: {booking.requestUser.email || "-"}
+                                </Typography>
+                              </>
+                            )}
+
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "rgba(255,255,255,0.8)" }}
+                            >
+                              Address: {booking.requestAddress || "-"}
+                            </Typography>
+
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "rgba(255,255,255,0.8)" }}
+                            >
+                              Mobile: {booking.requestPhone || "-"}
+                            </Typography>
+                          </>
+                        )}
+                    </>
                   )}
                 </CardContent>
 
@@ -110,15 +236,15 @@ const Notifications = () => {
                     <>
                       <Button
                         size="small"
-                        onClick={() => handleRespond(notif.id, booking.id, 'approved')}
-                        sx={{ color: '#f0c34a' }}
+                        onClick={() => handleRespond(notif.id, booking.id, "approved")}
+                        sx={{ color: "#f0c34a" }}
                       >
                         Accept
                       </Button>
                       <Button
                         size="small"
-                        onClick={() => handleRespond(notif.id, booking.id, 'declined')}
-                        sx={{ color: '#f0c34a' }}
+                        onClick={() => handleRespond(notif.id, booking.id, "declined")}
+                        sx={{ color: "#f0c34a" }}
                       >
                         Reject
                       </Button>
@@ -126,7 +252,11 @@ const Notifications = () => {
                   )}
 
                   {!notif.isRead && (
-                    <Button size="small" onClick={() => handleMarkRead(notif.id)} sx={{ color: '#8c5aff' }}>
+                    <Button
+                      size="small"
+                      onClick={() => handleMarkRead(notif.id)}
+                      sx={{ color: "#8c5aff" }}
+                    >
                       Mark as read
                     </Button>
                   )}
