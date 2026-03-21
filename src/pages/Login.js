@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import api from "../services/api";
 import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { Box, Typography, TextField, Button, Alert, Paper } from "@mui/material";
 
 const Login = () => {
@@ -109,6 +109,31 @@ const Login = () => {
             Login
           </Button>
         </Box>
+
+        <Typography
+          sx={{
+            mt: 3,
+            textAlign: "center",
+            color: "rgba(27,10,59,0.72)",
+            fontSize: 15,
+          }}
+        >
+          Not registered yet?{" "}
+          <Box
+            component={RouterLink}
+            to="/register"
+            sx={{
+              color: "#1b0a3b",
+              fontWeight: 700,
+              textDecoration: "none",
+              "&:hover": {
+                textDecoration: "underline",
+              },
+            }}
+          >
+            Create an account
+          </Box>
+        </Typography>
       </Paper>
     </Box>
   );

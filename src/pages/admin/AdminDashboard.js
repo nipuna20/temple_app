@@ -23,7 +23,7 @@ function TabPanel({ value, index, children }) {
   return value === index && <Box sx={{ p: 3 }}>{children}</Box>;
 }
 
-// ✅ allow admin to paste embed URL OR full iframe HTML
+// allow admin to paste embed URL OR full iframe HTML
 const extractEmbedUrl = (value) => {
   if (!value) return "";
   const v = value.trim();
@@ -38,7 +38,13 @@ const AdminDashboard = () => {
 
   const [vision, setVision] = useState("");
   const [mission, setMission] = useState("");
-  const [about, setAbout] = useState({ history: "", leadership: "", coreValues: "", vision: "", mission: "" });
+  const [about, setAbout] = useState({
+    history: "",
+    leadership: "",
+    coreValues: "",
+    vision: "",
+    mission: "",
+  });
 
   const [contactInfo, setContactInfo] = useState({
     address: "",
@@ -69,15 +75,32 @@ const AdminDashboard = () => {
   });
 
   const [communityPosts, setCommunityPosts] = useState([]);
-  const [newCommunity, setNewCommunity] = useState({ title: "", description: "", mediaUrls: "" });
+  const [newCommunity, setNewCommunity] = useState({
+    title: "",
+    description: "",
+    mediaUrls: "",
+  });
 
   const [publications, setPublications] = useState([]);
-  const [newPublication, setNewPublication] = useState({ title: "", description: "", url: "", type: "pdf" });
+  const [newPublication, setNewPublication] = useState({
+    title: "",
+    description: "",
+    url: "",
+    type: "pdf",
+  });
 
   const [danaBookings, setDanaBookings] = useState([]);
   const [donations, setDonations] = useState([]);
   const [monthlyPlans, setMonthlyPlans] = useState([]);
   const [contactMessages, setContactMessages] = useState([]);
+
+  // Poya Calendar
+  const [poyaItems, setPoyaItems] = useState([]);
+  const [newPoya, setNewPoya] = useState({
+    date: "",
+    subject: "",
+    description: "",
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,7 +114,6 @@ const AdminDashboard = () => {
         setContactInfo(contactRes.data);
 
         const eventsRes = await api.get("/events");
-        // Add local editable fields if not existing
         setEvents((eventsRes.data || []).map((e) => ({ ...e, streamUrl: e.streamUrl || "" })));
 
         const postsRes = await api.get("/blog");
@@ -105,6 +127,9 @@ const AdminDashboard = () => {
 
         const danaRes = await api.get("/dana");
         setDanaBookings(danaRes.data || []);
+
+        const poyaRes = await api.get("/poya");
+        setPoyaItems(poyaRes.data || []);
 
         const donationsRes = await api.get("/donations");
         setDonations(donationsRes.data || []);
@@ -127,9 +152,7 @@ const AdminDashboard = () => {
   // ---------------- Content Updates ----------------
   const updateVisionMission = async () => {
     try {
-      // When updating vision and mission, include the existing about fields
       await api.post("/content/about", { ...about, vision, mission });
-      // Sync the local state so subsequent about updates don't overwrite
       setAbout((prev) => ({ ...prev, vision, mission }));
       alert("Vision & Mission updated");
     } catch (err) {
@@ -139,9 +162,7 @@ const AdminDashboard = () => {
 
   const updateAbout = async () => {
     try {
-      // Ensure we also persist the current vision and mission when updating other about fields
       await api.post("/content/about", { ...about, vision, mission });
-      // Update local about state
       setAbout((prev) => ({ ...prev, vision, mission }));
       alert("About updated");
     } catch (err) {
@@ -169,7 +190,14 @@ const AdminDashboard = () => {
     try {
       const res = await api.post("/events", newEvent);
       setEvents([...events, { ...res.data, streamUrl: res.data.streamUrl || "" }]);
-      setNewEvent({ title: "", registrationDeadline: "", description: "", image: "", agenda: "", amount: "" });
+      setNewEvent({
+        title: "",
+        registrationDeadline: "",
+        description: "",
+        image: "",
+        agenda: "",
+        amount: "",
+      });
     } catch (err) {
       console.error(err);
     }
@@ -184,10 +212,11 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Stream: Save URL
   const saveStreamUrl = async (eventId, streamUrl) => {
     try {
-      await api.post(`/streams/${eventId}/url`, { streamUrl: extractEmbedUrl(streamUrl) });
+      await api.post(`/streams/${eventId}/url`, {
+        streamUrl: extractEmbedUrl(streamUrl),
+      });
       alert("Stream URL saved");
     } catch (err) {
       console.error(err);
@@ -195,7 +224,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Stream: Start Live
   const startLive = async (eventId) => {
     try {
       await api.post(`/streams/${eventId}/start`);
@@ -206,7 +234,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Stream: Stop Live
   const stopLive = async (eventId) => {
     try {
       await api.post(`/streams/${eventId}/stop`);
@@ -222,7 +249,14 @@ const AdminDashboard = () => {
     try {
       const res = await api.post("/blog", newPost);
       setBlogPosts([...blogPosts, res.data]);
-      setNewPost({ title: "", description: "", body: "", authorName: "", authorImage: "", status: "draft" });
+      setNewPost({
+        title: "",
+        description: "",
+        body: "",
+        authorName: "",
+        authorImage: "",
+        status: "draft",
+      });
     } catch (err) {
       console.error(err);
     }
@@ -240,12 +274,17 @@ const AdminDashboard = () => {
   // ---------------- Community CRUD ----------------
   const createCommunityPost = async () => {
     try {
-      const mediaUrlsArray = newCommunity.mediaUrls.split(",").map((u) => u.trim()).filter(Boolean);
+      const mediaUrlsArray = newCommunity.mediaUrls
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean);
+
       const res = await api.post("/community", {
         title: newCommunity.title,
         description: newCommunity.description,
         mediaUrls: mediaUrlsArray,
       });
+
       setCommunityPosts([...communityPosts, res.data]);
       setNewCommunity({ title: "", description: "", mediaUrls: "" });
     } catch (err) {
@@ -294,11 +333,40 @@ const AdminDashboard = () => {
 
   const respondDanaRequest = async (id, responseStatus) => {
     try {
-      const res = await api.put(`/dana/${id}/respond`, { status: responseStatus });
-      setDanaBookings(danaBookings.map((b) => (b.id === id ? res.data : b)));
+      await api.put(`/dana/${id}/respond`, { status: responseStatus });
+
+      const danaRes = await api.get("/dana");
+      setDanaBookings(danaRes.data || []);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to respond to Dana request');
+      alert(err.response?.data?.message || "Failed to respond to Dana request");
+    }
+  };
+
+  // ---------------- Poya Calendar ----------------
+  const createPoyaItem = async () => {
+    try {
+      const res = await api.post("/poya", newPoya);
+      setPoyaItems([...poyaItems, res.data]);
+      setNewPoya({
+        date: "",
+        subject: "",
+        description: "",
+      });
+      alert("Poya item created");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to create Poya item");
+    }
+  };
+
+  const deletePoyaItem = async (id) => {
+    try {
+      await api.delete(`/poya/${id}`);
+      setPoyaItems(poyaItems.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to delete Poya item");
     }
   };
 
@@ -327,6 +395,7 @@ const AdminDashboard = () => {
         <Tab label="Community Posts" />
         <Tab label="Publications" />
         <Tab label="Dana Bookings" />
+        <Tab label="Poya Calendar" />
         <Tab label="Donations" />
         <Tab label="Monthly Donations" />
         <Tab label="Contact Messages" />
@@ -335,8 +404,24 @@ const AdminDashboard = () => {
       {/* Vision & Mission */}
       <TabPanel value={tab} index={0}>
         <Typography variant="h5">Edit Vision & Mission</Typography>
-        <TextField label="Vision" value={vision} onChange={(e) => setVision(e.target.value)} fullWidth multiline rows={2} sx={{ my: 1 }} />
-        <TextField label="Mission" value={mission} onChange={(e) => setMission(e.target.value)} fullWidth multiline rows={2} sx={{ my: 1 }} />
+        <TextField
+          label="Vision"
+          value={vision}
+          onChange={(e) => setVision(e.target.value)}
+          fullWidth
+          multiline
+          rows={2}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Mission"
+          value={mission}
+          onChange={(e) => setMission(e.target.value)}
+          fullWidth
+          multiline
+          rows={2}
+          sx={{ my: 1 }}
+        />
         <Button variant="contained" onClick={updateVisionMission}>
           Save
         </Button>
@@ -345,9 +430,33 @@ const AdminDashboard = () => {
       {/* About */}
       <TabPanel value={tab} index={1}>
         <Typography variant="h5">Edit About</Typography>
-        <TextField label="History" value={about.history} onChange={(e) => setAbout({ ...about, history: e.target.value })} fullWidth multiline rows={3} sx={{ my: 1 }} />
-        <TextField label="Leadership" value={about.leadership} onChange={(e) => setAbout({ ...about, leadership: e.target.value })} fullWidth multiline rows={3} sx={{ my: 1 }} />
-        <TextField label="Core Values" value={about.coreValues} onChange={(e) => setAbout({ ...about, coreValues: e.target.value })} fullWidth multiline rows={3} sx={{ my: 1 }} />
+        <TextField
+          label="History"
+          value={about.history}
+          onChange={(e) => setAbout({ ...about, history: e.target.value })}
+          fullWidth
+          multiline
+          rows={3}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Leadership"
+          value={about.leadership}
+          onChange={(e) => setAbout({ ...about, leadership: e.target.value })}
+          fullWidth
+          multiline
+          rows={3}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Core Values"
+          value={about.coreValues}
+          onChange={(e) => setAbout({ ...about, coreValues: e.target.value })}
+          fullWidth
+          multiline
+          rows={3}
+          sx={{ my: 1 }}
+        />
         <Button variant="contained" onClick={updateAbout}>
           Save
         </Button>
@@ -356,9 +465,27 @@ const AdminDashboard = () => {
       {/* Contact Info */}
       <TabPanel value={tab} index={2}>
         <Typography variant="h5">Edit Contact Info</Typography>
-        <TextField label="Address" value={contactInfo.address} onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Phone" value={contactInfo.phone} onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Email" value={contactInfo.email} onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })} fullWidth sx={{ my: 1 }} />
+        <TextField
+          label="Address"
+          value={contactInfo.address}
+          onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Phone"
+          value={contactInfo.phone}
+          onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Email"
+          value={contactInfo.email}
+          onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
 
         <TextField
           label="FAQ (JSON)"
@@ -401,7 +528,12 @@ const AdminDashboard = () => {
         <Typography variant="h5">Create Event</Typography>
         <Grid container spacing={2} sx={{ my: 1 }}>
           <Grid item xs={12} sm={6}>
-            <TextField label="Title" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} fullWidth />
+            <TextField
+              label="Title"
+              value={newEvent.title}
+              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -409,21 +541,46 @@ const AdminDashboard = () => {
               type="date"
               InputLabelProps={{ shrink: true }}
               value={newEvent.registrationDeadline}
-              onChange={(e) => setNewEvent({ ...newEvent, registrationDeadline: e.target.value })}
+              onChange={(e) =>
+                setNewEvent({ ...newEvent, registrationDeadline: e.target.value })
+              }
               fullWidth
             />
           </Grid>
           <Grid item xs={12}>
-            <TextField label="Description" value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} fullWidth multiline rows={3} />
+            <TextField
+              label="Description"
+              value={newEvent.description}
+              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+              fullWidth
+              multiline
+              rows={3}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Image URL" value={newEvent.image} onChange={(e) => setNewEvent({ ...newEvent, image: e.target.value })} fullWidth />
+            <TextField
+              label="Image URL"
+              value={newEvent.image}
+              onChange={(e) => setNewEvent({ ...newEvent, image: e.target.value })}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Agenda" value={newEvent.agenda} onChange={(e) => setNewEvent({ ...newEvent, agenda: e.target.value })} fullWidth />
+            <TextField
+              label="Agenda"
+              value={newEvent.agenda}
+              onChange={(e) => setNewEvent({ ...newEvent, agenda: e.target.value })}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Amount (0 for free)" type="number" value={newEvent.amount} onChange={(e) => setNewEvent({ ...newEvent, amount: e.target.value })} fullWidth />
+            <TextField
+              label="Amount (0 for free)"
+              type="number"
+              value={newEvent.amount}
+              onChange={(e) => setNewEvent({ ...newEvent, amount: e.target.value })}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12}>
             <Button variant="contained" onClick={createEvent}>
@@ -447,23 +604,27 @@ const AdminDashboard = () => {
 
               <Divider sx={{ my: 2 }} />
 
-              {/* ✅ STREAM URL FIELD */}
               <TextField
                 label="Live Stream Embed URL (YouTube/Cloudflare)"
                 value={event.streamUrl || ""}
                 onChange={(e) => {
                   const updated = events.map((ev) =>
-                    ev.id === event.id ? { ...ev, streamUrl: extractEmbedUrl(e.target.value) } : ev
+                    ev.id === event.id
+                      ? { ...ev, streamUrl: extractEmbedUrl(e.target.value) }
+                      : ev
                   );
                   setEvents(updated);
                 }}
                 fullWidth
                 sx={{ mt: 1 }}
-                helperText='Example: https://www.youtube.com/embed/VIDEO_ID'
+                helperText="Example: https://www.youtube.com/embed/VIDEO_ID"
               />
 
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
-                <Button variant="contained" onClick={() => saveStreamUrl(event.id, event.streamUrl)}>
+                <Button
+                  variant="contained"
+                  onClick={() => saveStreamUrl(event.id, event.streamUrl)}
+                >
                   Save Stream URL
                 </Button>
                 <Button variant="outlined" onClick={() => startLive(event.id)}>
@@ -472,7 +633,11 @@ const AdminDashboard = () => {
                 <Button variant="outlined" onClick={() => stopLive(event.id)}>
                   Stop Live
                 </Button>
-                <Button color="error" variant="outlined" onClick={() => deleteEvent(event.id)}>
+                <Button
+                  color="error"
+                  variant="outlined"
+                  onClick={() => deleteEvent(event.id)}
+                >
                   Delete Event
                 </Button>
               </Box>
@@ -484,13 +649,54 @@ const AdminDashboard = () => {
       {/* Blog Posts */}
       <TabPanel value={tab} index={4}>
         <Typography variant="h5">Create Blog Post</Typography>
-        <TextField label="Title" value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Description" value={newPost.description} onChange={(e) => setNewPost({ ...newPost, description: e.target.value })} fullWidth multiline rows={2} sx={{ my: 1 }} />
-        <TextField label="Body (HTML)" value={newPost.body} onChange={(e) => setNewPost({ ...newPost, body: e.target.value })} fullWidth multiline rows={4} sx={{ my: 1 }} />
-        <TextField label="Author Name" value={newPost.authorName} onChange={(e) => setNewPost({ ...newPost, authorName: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Author Image URL" value={newPost.authorImage} onChange={(e) => setNewPost({ ...newPost, authorImage: e.target.value })} fullWidth sx={{ my: 1 }} />
+        <TextField
+          label="Title"
+          value={newPost.title}
+          onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Description"
+          value={newPost.description}
+          onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
+          fullWidth
+          multiline
+          rows={2}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Body (HTML)"
+          value={newPost.body}
+          onChange={(e) => setNewPost({ ...newPost, body: e.target.value })}
+          fullWidth
+          multiline
+          rows={4}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Author Name"
+          value={newPost.authorName}
+          onChange={(e) => setNewPost({ ...newPost, authorName: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Author Image URL"
+          value={newPost.authorImage}
+          onChange={(e) => setNewPost({ ...newPost, authorImage: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
 
-        <TextField label="Status" select value={newPost.status} onChange={(e) => setNewPost({ ...newPost, status: e.target.value })} fullWidth sx={{ my: 1 }}>
+        <TextField
+          label="Status"
+          select
+          value={newPost.status}
+          onChange={(e) => setNewPost({ ...newPost, status: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        >
           <MenuItem value="draft">Draft</MenuItem>
           <MenuItem value="published">Published</MenuItem>
         </TextField>
@@ -520,9 +726,31 @@ const AdminDashboard = () => {
       {/* Community Posts */}
       <TabPanel value={tab} index={5}>
         <Typography variant="h5">Create Community Post</Typography>
-        <TextField label="Title" value={newCommunity.title} onChange={(e) => setNewCommunity({ ...newCommunity, title: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Description" value={newCommunity.description} onChange={(e) => setNewCommunity({ ...newCommunity, description: e.target.value })} fullWidth multiline rows={3} sx={{ my: 1 }} />
-        <TextField label="Media URLs (comma separated)" value={newCommunity.mediaUrls} onChange={(e) => setNewCommunity({ ...newCommunity, mediaUrls: e.target.value })} fullWidth sx={{ my: 1 }} />
+        <TextField
+          label="Title"
+          value={newCommunity.title}
+          onChange={(e) => setNewCommunity({ ...newCommunity, title: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Description"
+          value={newCommunity.description}
+          onChange={(e) =>
+            setNewCommunity({ ...newCommunity, description: e.target.value })
+          }
+          fullWidth
+          multiline
+          rows={3}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Media URLs (comma separated)"
+          value={newCommunity.mediaUrls}
+          onChange={(e) => setNewCommunity({ ...newCommunity, mediaUrls: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
         <Button variant="contained" onClick={createCommunityPost}>
           Create Post
         </Button>
@@ -534,7 +762,9 @@ const AdminDashboard = () => {
           <Card key={post.id} sx={{ my: 1 }}>
             <CardContent>
               <Typography variant="h6">{post.title}</Typography>
-              <Typography variant="body2">{post.description?.slice(0, 60)}</Typography>
+              <Typography variant="body2">
+                {post.description?.slice(0, 60)}
+              </Typography>
             </CardContent>
             <CardActions>
               <Button size="small" onClick={() => deleteCommunityPost(post.id)}>
@@ -548,10 +778,38 @@ const AdminDashboard = () => {
       {/* Publications */}
       <TabPanel value={tab} index={6}>
         <Typography variant="h5">Create Publication</Typography>
-        <TextField label="Title" value={newPublication.title} onChange={(e) => setNewPublication({ ...newPublication, title: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Description" value={newPublication.description} onChange={(e) => setNewPublication({ ...newPublication, description: e.target.value })} fullWidth multiline rows={2} sx={{ my: 1 }} />
-        <TextField label="URL" value={newPublication.url} onChange={(e) => setNewPublication({ ...newPublication, url: e.target.value })} fullWidth sx={{ my: 1 }} />
-        <TextField label="Type (pdf|video)" value={newPublication.type} onChange={(e) => setNewPublication({ ...newPublication, type: e.target.value })} fullWidth sx={{ my: 1 }} />
+        <TextField
+          label="Title"
+          value={newPublication.title}
+          onChange={(e) => setNewPublication({ ...newPublication, title: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Description"
+          value={newPublication.description}
+          onChange={(e) =>
+            setNewPublication({ ...newPublication, description: e.target.value })
+          }
+          fullWidth
+          multiline
+          rows={2}
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="URL"
+          value={newPublication.url}
+          onChange={(e) => setNewPublication({ ...newPublication, url: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
+        <TextField
+          label="Type (pdf|video)"
+          value={newPublication.type}
+          onChange={(e) => setNewPublication({ ...newPublication, type: e.target.value })}
+          fullWidth
+          sx={{ my: 1 }}
+        />
         <Button variant="contained" onClick={createPublication}>
           Create Publication
         </Button>
@@ -581,16 +839,24 @@ const AdminDashboard = () => {
           <Card key={booking.id} sx={{ my: 1 }}>
             <CardContent>
               <Typography variant="h6">
-                Owner: {booking.User?.firstName || 'Unknown'} {booking.User?.lastName || ''}
+                Owner: {booking.User?.firstName || "Unknown"} {booking.User?.lastName || ""}
               </Typography>
               <Typography variant="body2">
-                Owner Email: {booking.User?.email || '-'}
+                Owner Email: {booking.User?.email || "-"}
               </Typography>
               <Typography variant="body2">
+                Owner Address: {booking.ownerAddress || "-"}
+              </Typography>
+              <Typography variant="body2">
+                Owner Mobile: {booking.ownerPhone || "-"}
+              </Typography>
+
+              <Typography variant="body2" sx={{ mt: 1 }}>
                 Date: {new Date(booking.date).toLocaleDateString()} | Meal: {booking.mealType}
               </Typography>
               <Typography variant="body2">Admin status: {booking.status}</Typography>
               <Typography variant="body2">Request status: {booking.requestStatus}</Typography>
+
               {booking.requestMessage && (
                 <Typography variant="body2">Request message: {booking.requestMessage}</Typography>
               )}
@@ -599,27 +865,43 @@ const AdminDashboard = () => {
                 <>
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="body2">
-                    Request User: {booking.requestUser.firstName || 'Unknown'} {booking.requestUser.lastName || ''}
+                    Request User: {booking.requestUser.firstName || "Unknown"} {booking.requestUser.lastName || ""}
                   </Typography>
                   <Typography variant="body2">
-                    Request User Email: {booking.requestUser.email || '-'}
+                    Request User Email: {booking.requestUser.email || "-"}
+                  </Typography>
+                  <Typography variant="body2">
+                    Request User Address: {booking.requestAddress || "-"}
+                  </Typography>
+                  <Typography variant="body2">
+                    Request User Mobile: {booking.requestPhone || "-"}
                   </Typography>
                 </>
               )}
             </CardContent>
-            <CardActions sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Button size="small" onClick={() => updateDanaStatus(booking.id, 'approved')}>
+
+            <CardActions sx={{ flexWrap: "wrap", gap: 1 }}>
+              <Button size="small" onClick={() => updateDanaStatus(booking.id, "approved")}>
                 Approve Booking
               </Button>
-              <Button size="small" onClick={() => updateDanaStatus(booking.id, 'declined')}>
+              <Button size="small" onClick={() => updateDanaStatus(booking.id, "declined")}>
                 Decline Booking
               </Button>
-              {booking.requestStatus === 'pending' && (
+
+              {booking.requestStatus === "pending" && (
                 <>
-                  <Button size="small" color="success" onClick={() => respondDanaRequest(booking.id, 'approved')}>
+                  <Button
+                    size="small"
+                    color="success"
+                    onClick={() => respondDanaRequest(booking.id, "approved")}
+                  >
                     Accept Request
                   </Button>
-                  <Button size="small" color="error" onClick={() => respondDanaRequest(booking.id, 'declined')}>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => respondDanaRequest(booking.id, "declined")}
+                  >
                     Reject Request
                   </Button>
                 </>
@@ -629,14 +911,84 @@ const AdminDashboard = () => {
         ))}
       </TabPanel>
 
-      {/* Donations */}
+      {/* Poya Calendar */}
       <TabPanel value={tab} index={8}>
+        <Typography variant="h5">Create Poya Calendar Item</Typography>
+
+        <Grid container spacing={2} sx={{ my: 1 }}>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Date"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={newPoya.date}
+              onChange={(e) => setNewPoya({ ...newPoya, date: e.target.value })}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={8}>
+            <TextField
+              label="Subject"
+              value={newPoya.subject}
+              onChange={(e) => setNewPoya({ ...newPoya, subject: e.target.value })}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              label="Description"
+              value={newPoya.description}
+              onChange={(e) =>
+                setNewPoya({ ...newPoya, description: e.target.value })
+              }
+              fullWidth
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button variant="contained" onClick={createPoyaItem}>
+              Add Poya Item
+            </Button>
+          </Grid>
+        </Grid>
+
+        <Typography variant="h5" sx={{ mt: 4 }}>
+          Existing Poya Calendar Items
+        </Typography>
+
+        {poyaItems.map((item) => (
+          <Card key={item.id} sx={{ my: 2 }}>
+            <CardContent>
+              <Typography variant="h6">{item.subject}</Typography>
+              <Typography variant="body2">
+                Date: {new Date(item.date).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {item.description}
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button color="error" onClick={() => deletePoyaItem(item.id)}>
+                Delete
+              </Button>
+            </CardActions>
+          </Card>
+        ))}
+      </TabPanel>
+
+      {/* Donations */}
+      <TabPanel value={tab} index={9}>
         <Typography variant="h5">Donations</Typography>
         {donations.map((don) => (
           <Card key={don.id} sx={{ my: 1 }}>
             <CardContent>
               <Typography variant="body2">
-                {don.type} donation of ${don.amount} on {new Date(don.createdAt).toLocaleDateString()}
+                {don.type} donation of ${don.amount} on{" "}
+                {new Date(don.createdAt).toLocaleDateString()}
               </Typography>
             </CardContent>
           </Card>
@@ -644,13 +996,14 @@ const AdminDashboard = () => {
       </TabPanel>
 
       {/* Monthly Donations */}
-      <TabPanel value={tab} index={9}>
+      <TabPanel value={tab} index={10}>
         <Typography variant="h5">Monthly Donations</Typography>
         {monthlyPlans.map((plan) => (
           <Card key={plan.id} sx={{ my: 1 }}>
             <CardContent>
               <Typography variant="body2">
-                User ID: {plan.userId} | Amount: ${plan.amount} | Frequency: {plan.frequency} | Status: {plan.status}
+                User ID: {plan.userId} | Amount: ${plan.amount} | Frequency:{" "}
+                {plan.frequency} | Status: {plan.status}
               </Typography>
             </CardContent>
           </Card>
@@ -658,7 +1011,7 @@ const AdminDashboard = () => {
       </TabPanel>
 
       {/* Contact Messages */}
-      <TabPanel value={tab} index={10}>
+      <TabPanel value={tab} index={11}>
         <Typography variant="h5">Contact Messages</Typography>
         <List>
           {contactMessages.map((msg) => (
@@ -680,7 +1033,11 @@ const AdminDashboard = () => {
                     <Typography component="span" variant="body2">
                       {msg.message}
                     </Typography>
-                    <Typography component="span" variant="caption" sx={{ display: "block" }}>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      sx={{ display: "block" }}
+                    >
                       Responded: {msg.responded ? "Yes" : "No"}
                     </Typography>
                   </>

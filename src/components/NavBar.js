@@ -27,7 +27,6 @@ const NavBar = () => {
 
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
@@ -37,7 +36,7 @@ const NavBar = () => {
         const unread = (res.data || []).filter((n) => !n.isRead).length;
         setNotifCount(unread);
       } catch (err) {
-        // ignore silently
+        setNotifCount(0);
       }
     };
 
@@ -79,13 +78,7 @@ const NavBar = () => {
 
   const userDisplayName = React.useMemo(() => {
     if (!user) return "";
-    return (
-      user.firstName ||
-      user.first_name ||
-      user.name ||
-      user.email ||
-      "User"
-    );
+    return user.firstName || user.first_name || user.name || user.email || "User";
   }, [user]);
 
   const navLinks = [
@@ -95,7 +88,7 @@ const NavBar = () => {
     { label: "Community", to: "/community" },
     { label: "Publications", to: "/publications" },
     { label: "Contact & Support", to: "/contact" },
-    { label: "Dana", to: "/dana" },
+    { label: "Poya Calender", to: "/poya-calendar" },
   ];
 
   if (user) {
@@ -133,8 +126,7 @@ const NavBar = () => {
     borderRadius: 2,
     px: 1.5,
     py: 1.2,
-    backgroundColor:
-      pathname === to ? "rgba(255,255,255,0.10)" : "transparent",
+    backgroundColor: pathname === to ? "rgba(255,255,255,0.10)" : "transparent",
     "&:hover": {
       backgroundColor: "rgba(255,255,255,0.08)",
     },
@@ -192,12 +184,13 @@ const NavBar = () => {
             <Typography
               sx={{
                 fontFamily: `"Georgia","Times New Roman",serif`,
-                fontSize: { xs: 14, sm: 16, md: 18 },
+                fontSize: { xs: 16, sm: 18, md: 23 },
                 letterSpacing: "0.02em",
-                lineHeight: 1.2,
+                lineHeight: 2.3,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                fontWeight: 500,
               }}
             >
               East End Meditaion and Wellness Society
@@ -241,34 +234,65 @@ const NavBar = () => {
               </Button>
 
               {!user && (
-                <Button
-                  variant="contained"
-                  component={RouterLink}
-                  to="/donate-monthly"
-                  sx={{
-                    ml: 1,
-                    textTransform: "none",
-                    fontWeight: 700,
-                    borderRadius: 999,
-                    px: 2.2,
-                    py: 0.9,
-                    backgroundColor: "#8c5aff",
-                    color: "#ffffff",
-                    "&:hover": { backgroundColor: "#a27df5" },
-                  }}
-                >
-                  Monthly
-                </Button>
+                <>
+                  {/* <Button
+                    variant="contained"
+                    component={RouterLink}
+                    to="/donate-monthly"
+                    sx={{
+                      ml: 1,
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 999,
+                      px: 2.2,
+                      py: 0.9,
+                      backgroundColor: "#8c5aff",
+                      color: "#ffffff",
+                      "&:hover": { backgroundColor: "#a27df5" },
+                    }}
+                  >
+                    Monthly
+                  </Button> */}
+
+                  <Button
+                    component={RouterLink}
+                    to="/login"
+                    sx={{
+                      ...linkBtnSx("/login"),
+                      ml: 1,
+                    }}
+                  >
+                    Login
+                  </Button>
+
+                  {/* <Button
+                    variant="outlined"
+                    component={RouterLink}
+                    to="/register"
+                    sx={{
+                      ml: 0.5,
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 999,
+                      px: 2.2,
+                      py: 0.9,
+                      color: "#fff",
+                      borderColor: "rgba(255,255,255,0.22)",
+                      "&:hover": {
+                        borderColor: "rgba(255,255,255,0.38)",
+                        backgroundColor: "rgba(255,255,255,0.08)",
+                      },
+                    }}
+                  >
+                    Register
+                  </Button> */}
+                </>
               )}
 
               {user ? (
                 <>
                   {user?.role === "admin" && (
-                    <Button
-                      component={RouterLink}
-                      to="/admin"
-                      sx={linkBtnSx("/admin")}
-                    >
+                    <Button component={RouterLink} to="/admin" sx={linkBtnSx("/admin")}>
                       Dashboard
                     </Button>
                   )}
@@ -333,7 +357,7 @@ const NavBar = () => {
                       Profile
                     </MenuItem>
 
-                    <MenuItem
+                    {/* <MenuItem
                       component={RouterLink}
                       to="/donate-monthly"
                       onClick={handleMenuClose}
@@ -345,7 +369,7 @@ const NavBar = () => {
                       }}
                     >
                       Monthly
-                    </MenuItem>
+                    </MenuItem> */}
 
                     <MenuItem
                       onClick={handleLogout}
@@ -360,24 +384,7 @@ const NavBar = () => {
                     </MenuItem>
                   </Menu>
                 </>
-              ) : (
-                <>
-                  <Button
-                    component={RouterLink}
-                    to="/login"
-                    sx={linkBtnSx("/login")}
-                  >
-                    Login
-                  </Button>
-                  <Button
-                    component={RouterLink}
-                    to="/register"
-                    sx={linkBtnSx("/register")}
-                  >
-                    Register
-                  </Button>
-                </>
-              )}
+              ) : null}
             </Stack>
           ) : (
             <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
@@ -623,7 +630,7 @@ const NavBar = () => {
                 <Button
                   onClick={handleLogout}
                   sx={{
-                    ...mobileLinkBtnSx("logout"),
+                    ...mobileLinkBtnSx("/logout"),
                     color: "#ffd7d7",
                   }}
                 >

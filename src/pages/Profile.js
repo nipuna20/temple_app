@@ -13,18 +13,60 @@ import {
     Button,
     Stack,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import api from "../services/api";
-import { Link as RouterLink } from "react-router-dom";
+
+const getOrdinalDay = (day) => {
+    if (day > 3 && day < 21) return `${day}th`;
+
+    switch (day % 10) {
+        case 1:
+            return `${day}st`;
+        case 2:
+            return `${day}nd`;
+        case 3:
+            return `${day}rd`;
+        default:
+            return `${day}th`;
+    }
+};
+
+const formatCustomDate = (dateString) => {
+    if (!dateString) return "-";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "-";
+
+    const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ];
+
+    return `${months[date.getMonth()]}/${getOrdinalDay(
+        date.getDate()
+    )}/${date.getFullYear()}`;
+};
 
 const Profile = () => {
-    const { user, logout } = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
 
     const [activeTab, setActiveTab] = useState("dashboard");
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [allEvents, setAllEvents] = useState([]);
     const [freeEvents, setFreeEvents] = useState([]);
     const [paidRegisteredEvents, setPaidRegisteredEvents] = useState([]);
     const [myDanaBookings, setMyDanaBookings] = useState([]);
@@ -34,19 +76,22 @@ const Profile = () => {
             setLoading(true);
             setError("");
 
-            const [profileRes, eventsRes, registrationsRes, danaRes] = await Promise.all([
-                api.get("/auth/me"),
-                api.get("/events"),
-                api.get("/events/my/registrations"),
-                api.get("/dana/my-bookings"),
-            ]);
+            const [profileRes, eventsRes, registrationsRes, danaRes] =
+                await Promise.all([
+                    api.get("/auth/me"),
+                    api.get("/events"),
+                    api.get("/events/my/registrations"),
+                    api.get("/dana/my-bookings"),
+                ]);
 
             const profileData = profileRes.data;
-            const allEvents = eventsRes.data || [];
+            const allEventsData = eventsRes.data || [];
             const myRegistrations = registrationsRes.data || [];
             const danaBookings = danaRes.data || [];
 
-            const freeOnly = allEvents.filter((event) => Number(event.amount || 0) <= 0);
+            const freeOnly = allEventsData.filter(
+                (event) => Number(event.amount || 0) <= 0
+            );
 
             const paidMap = new Map();
             myRegistrations.forEach((reg) => {
@@ -61,6 +106,7 @@ const Profile = () => {
             });
 
             setProfile(profileData);
+            setAllEvents(allEventsData);
             setFreeEvents(freeOnly);
             setPaidRegisteredEvents(Array.from(paidMap.values()));
             setMyDanaBookings(danaBookings);
@@ -82,14 +128,16 @@ const Profile = () => {
     }, [profile]);
 
     const avatarLetter =
-        (profile?.firstName?.charAt(0) ||
+        (
+            profile?.firstName?.charAt(0) ||
             user?.firstName?.charAt(0) ||
             user?.email?.charAt(0) ||
-            "U").toUpperCase();
+            "U"
+        ).toUpperCase();
 
     const dashboardCounts = {
+        allEvents: allEvents.length,
         dana: myDanaBookings.length,
-        freeEvents: freeEvents.length,
         paidEvents: paidRegisteredEvents.length,
     };
 
@@ -103,19 +151,6 @@ const Profile = () => {
             }}
         >
             <Container maxWidth="lg">
-                <Typography
-                    sx={{
-                        fontFamily: `"Cormorant Garamond","Georgia","Times New Roman",serif`,
-                        color: "#f2ebff",
-                        fontSize: { xs: "2.6rem", md: "4rem" },
-                        lineHeight: 1,
-                        mb: 4,
-                        textAlign: "center",
-                    }}
-                >
-                    My Profile
-                </Typography>
-
                 {error ? (
                     <Alert
                         severity="error"
@@ -160,11 +195,20 @@ const Profile = () => {
                                 />
                                 <Skeleton
                                     variant="text"
-                                    sx={{ height: 38, width: "80%", bgcolor: "rgba(255,255,255,0.10)" }}
+                                    sx={{
+                                        height: 38,
+                                        width: "80%",
+                                        bgcolor: "rgba(255,255,255,0.10)",
+                                    }}
                                 />
                                 <Skeleton
                                     variant="text"
-                                    sx={{ height: 28, width: "60%", bgcolor: "rgba(255,255,255,0.10)", mb: 2 }}
+                                    sx={{
+                                        height: 28,
+                                        width: "60%",
+                                        bgcolor: "rgba(255,255,255,0.10)",
+                                        mb: 2,
+                                    }}
                                 />
                             </>
                         ) : (
@@ -231,17 +275,46 @@ const Profile = () => {
                             </SidebarButton>
 
                             <SidebarButton
-                                active={activeTab === "dana"}
-                                onClick={() => setActiveTab("dana")}
+                                active={activeTab === "user-details"}
+                                onClick={() => setActiveTab("user-details")}
                             >
-                                Booking Dana
+                                User Details
                             </SidebarButton>
+
+                            <Box sx={{ mt: 0.5 }}>
+                                <Typography
+                                    sx={{
+                                        color: "rgba(255,255,255,0.62)",
+                                        fontSize: 13,
+                                        fontWeight: 700,
+                                        px: 1.5,
+                                        mb: 1,
+                                        textTransform: "uppercase",
+                                        letterSpacing: 0.6,
+                                    }}
+                                >
+                                    Dana Booking
+                                </Typography>
+
+                                <Stack spacing={1} sx={{ pl: 1 }}>
+                                    <SidebarSubButton component={RouterLink} to="/dana">
+                                        Dana Booking
+                                    </SidebarSubButton>
+
+                                    <SidebarSubButton
+                                        active={activeTab === "dana"}
+                                        onClick={() => setActiveTab("dana")}
+                                    >
+                                        My Booking
+                                    </SidebarSubButton>
+                                </Stack>
+                            </Box>
 
                             <SidebarButton
                                 active={activeTab === "events"}
                                 onClick={() => setActiveTab("events")}
                             >
-                                Events
+                                My Events
                             </SidebarButton>
                         </Stack>
 
@@ -262,44 +335,6 @@ const Profile = () => {
                                 }}
                             >
                                 Monthly
-                            </Button>
-
-                            <Button
-                                variant="outlined"
-                                onClick={fetchAllData}
-                                sx={{
-                                    textTransform: "none",
-                                    borderRadius: 999,
-                                    px: 2.5,
-                                    py: 1.1,
-                                    color: "#fff",
-                                    borderColor: "rgba(255,255,255,0.20)",
-                                    "&:hover": {
-                                        borderColor: "rgba(255,255,255,0.36)",
-                                        backgroundColor: "rgba(255,255,255,0.05)",
-                                    },
-                                }}
-                            >
-                                Refresh
-                            </Button>
-
-                            <Button
-                                variant="outlined"
-                                onClick={logout}
-                                sx={{
-                                    textTransform: "none",
-                                    borderRadius: 999,
-                                    px: 2.5,
-                                    py: 1.1,
-                                    color: "#fff",
-                                    borderColor: "rgba(255,255,255,0.20)",
-                                    "&:hover": {
-                                        borderColor: "rgba(255,255,255,0.36)",
-                                        backgroundColor: "rgba(255,255,255,0.05)",
-                                    },
-                                }}
-                            >
-                                Logout
                             </Button>
                         </Stack>
                     </Paper>
@@ -324,17 +359,29 @@ const Profile = () => {
                                 <>
                                     <Skeleton
                                         variant="text"
-                                        sx={{ height: 48, width: "35%", bgcolor: "rgba(255,255,255,0.10)", mb: 2 }}
+                                        sx={{
+                                            height: 48,
+                                            width: "35%",
+                                            bgcolor: "rgba(255,255,255,0.10)",
+                                            mb: 2,
+                                        }}
                                     />
                                     <Skeleton
                                         variant="rectangular"
                                         height={170}
-                                        sx={{ borderRadius: 3, bgcolor: "rgba(255,255,255,0.10)", mb: 2 }}
+                                        sx={{
+                                            borderRadius: 3,
+                                            bgcolor: "rgba(255,255,255,0.10)",
+                                            mb: 2,
+                                        }}
                                     />
                                     <Skeleton
                                         variant="rectangular"
                                         height={120}
-                                        sx={{ borderRadius: 3, bgcolor: "rgba(255,255,255,0.10)" }}
+                                        sx={{
+                                            borderRadius: 3,
+                                            bgcolor: "rgba(255,255,255,0.10)",
+                                        }}
                                     />
                                 </>
                             ) : (
@@ -354,16 +401,94 @@ const Profile = () => {
                                             </Typography>
 
                                             <Grid container spacing={3}>
+                                                <Grid item xs={12} sm={4}>
+                                                    <CountCard
+                                                        title="All Events"
+                                                        count={dashboardCounts.allEvents}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={4}>
+                                                    <CountCard
+                                                        title="Dana Bookings"
+                                                        count={dashboardCounts.dana}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={4}>
+                                                    <CountCard
+                                                        title="Paid Events"
+                                                        count={dashboardCounts.paidEvents}
+                                                    />
+                                                </Grid>
+                                            </Grid>
+
+                                            <Divider
+                                                sx={{
+                                                    borderColor: "rgba(255,255,255,0.10)",
+                                                    my: 3,
+                                                }}
+                                            />
+
+                                            <Typography
+                                                sx={{
+                                                    color: "#f2ebff",
+                                                    fontSize: 22,
+                                                    fontWeight: 700,
+                                                    mb: 2,
+                                                }}
+                                            >
+                                                All Events
+                                            </Typography>
+
+                                            {allEvents.length === 0 ? (
+                                                <EmptyState text="No events available." />
+                                            ) : (
+                                                <Stack spacing={2}>
+                                                    {allEvents.map((event) => (
+                                                        <EventCard
+                                                            key={event.id}
+                                                            event={event}
+                                                            showPaid={Number(event.amount || 0) > 0}
+                                                        />
+                                                    ))}
+                                                </Stack>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {activeTab === "user-details" && (
+                                        <>
+                                            <Typography
+                                                sx={{
+                                                    color: "#fff",
+                                                    fontSize: { xs: 26, md: 34 },
+                                                    fontWeight: 700,
+                                                    lineHeight: 1.2,
+                                                    mb: 3,
+                                                }}
+                                            >
+                                                User Details
+                                            </Typography>
+
+                                            <Grid container spacing={3}>
                                                 <Grid item xs={12} sm={6}>
-                                                    <InfoCard label="First name" value={profile?.firstName || "-"} />
+                                                    <InfoCard
+                                                        label="First name"
+                                                        value={profile?.firstName || "-"}
+                                                    />
                                                 </Grid>
 
                                                 <Grid item xs={12} sm={6}>
-                                                    <InfoCard label="Last name" value={profile?.lastName || "-"} />
+                                                    <InfoCard
+                                                        label="Last name"
+                                                        value={profile?.lastName || "-"}
+                                                    />
                                                 </Grid>
 
                                                 <Grid item xs={12} sm={6}>
-                                                    <InfoCard label="Email" value={profile?.email || "-"} />
+                                                    <InfoCard
+                                                        label="Email"
+                                                        value={profile?.email || "-"}
+                                                    />
                                                 </Grid>
 
                                                 <Grid item xs={12} sm={6}>
@@ -373,26 +498,8 @@ const Profile = () => {
                                                 <Grid item xs={12}>
                                                     <InfoCard
                                                         label="Joined"
-                                                        value={
-                                                            profile?.createdAt
-                                                                ? new Date(profile.createdAt).toLocaleDateString()
-                                                                : "-"
-                                                        }
+                                                        value={formatCustomDate(profile?.createdAt)}
                                                     />
-                                                </Grid>
-                                            </Grid>
-
-                                            <Divider sx={{ borderColor: "rgba(255,255,255,0.10)", my: 3 }} />
-
-                                            <Grid container spacing={3}>
-                                                <Grid item xs={12} sm={4}>
-                                                    <CountCard title="Dana Bookings" count={dashboardCounts.dana} />
-                                                </Grid>
-                                                <Grid item xs={12} sm={4}>
-                                                    <CountCard title="Free Events" count={dashboardCounts.freeEvents} />
-                                                </Grid>
-                                                <Grid item xs={12} sm={4}>
-                                                    <CountCard title="Paid Events" count={dashboardCounts.paidEvents} />
                                                 </Grid>
                                             </Grid>
                                         </>
@@ -409,7 +516,7 @@ const Profile = () => {
                                                     mb: 3,
                                                 }}
                                             >
-                                                Booking Dana
+                                                My Booking
                                             </Typography>
 
                                             {myDanaBookings.length === 0 ? (
@@ -418,20 +525,59 @@ const Profile = () => {
                                                 <Stack spacing={2}>
                                                     {myDanaBookings.map((booking) => (
                                                         <ContentCard key={booking.id}>
-                                                            <Typography sx={{ color: "#fff", fontSize: 18, fontWeight: 700 }}>
-                                                                {new Date(booking.date).toLocaleDateString()}
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "#fff",
+                                                                    fontSize: 18,
+                                                                    fontWeight: 700,
+                                                                }}
+                                                            >
+                                                                {formatCustomDate(booking.date)}
                                                             </Typography>
 
-                                                            <Typography sx={{ color: "rgba(255,255,255,0.78)", mt: 0.8 }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "rgba(255,255,255,0.78)",
+                                                                    mt: 0.8,
+                                                                }}
+                                                            >
                                                                 Meal: {booking.mealType || "-"}
                                                             </Typography>
 
-                                                            <Typography sx={{ color: "rgba(255,255,255,0.78)", mt: 0.5 }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "rgba(255,255,255,0.78)",
+                                                                    mt: 0.5,
+                                                                }}
+                                                            >
                                                                 Booking status: {booking.status || "-"}
                                                             </Typography>
 
-                                                            <Typography sx={{ color: "rgba(255,255,255,0.78)", mt: 0.5 }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "rgba(255,255,255,0.78)",
+                                                                    mt: 0.5,
+                                                                }}
+                                                            >
                                                                 Request status: {booking.requestStatus || "none"}
+                                                            </Typography>
+
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "rgba(255,255,255,0.78)",
+                                                                    mt: 0.5,
+                                                                }}
+                                                            >
+                                                                Address: {booking.ownerAddress || "-"}
+                                                            </Typography>
+
+                                                            <Typography
+                                                                sx={{
+                                                                    color: "rgba(255,255,255,0.78)",
+                                                                    mt: 0.5,
+                                                                }}
+                                                            >
+                                                                Mobile: {booking.ownerPhone || "-"}
                                                             </Typography>
                                                         </ContentCard>
                                                     ))}
@@ -454,29 +600,6 @@ const Profile = () => {
                                                 Events
                                             </Typography>
 
-                                            <Box sx={{ mb: 4 }}>
-                                                <Typography
-                                                    sx={{
-                                                        color: "#f2ebff",
-                                                        fontSize: 22,
-                                                        fontWeight: 700,
-                                                        mb: 2,
-                                                    }}
-                                                >
-                                                    Free Events
-                                                </Typography>
-
-                                                {freeEvents.length === 0 ? (
-                                                    <EmptyState text="No free events available." />
-                                                ) : (
-                                                    <Stack spacing={2}>
-                                                        {freeEvents.map((event) => (
-                                                            <EventCard key={event.id} event={event} showPaid={false} />
-                                                        ))}
-                                                    </Stack>
-                                                )}
-                                            </Box>
-
                                             <Box sx={{ mt: 5 }}>
                                                 <Typography
                                                     sx={{
@@ -494,7 +617,38 @@ const Profile = () => {
                                                 ) : (
                                                     <Stack spacing={2}>
                                                         {paidRegisteredEvents.map((event) => (
-                                                            <EventCard key={event.id} event={event} showPaid />
+                                                            <EventCard
+                                                                key={event.id}
+                                                                event={event}
+                                                                showPaid
+                                                            />
+                                                        ))}
+                                                    </Stack>
+                                                )}
+                                            </Box>
+
+                                            <Box sx={{ mb: 4 }}>
+                                                <Typography
+                                                    sx={{
+                                                        color: "#f2ebff",
+                                                        fontSize: 22,
+                                                        fontWeight: 700,
+                                                        mb: 2,
+                                                    }}
+                                                >
+                                                    Free Events
+                                                </Typography>
+
+                                                {freeEvents.length === 0 ? (
+                                                    <EmptyState text="No free events available." />
+                                                ) : (
+                                                    <Stack spacing={2}>
+                                                        {freeEvents.map((event) => (
+                                                            <EventCard
+                                                                key={event.id}
+                                                                event={event}
+                                                                showPaid={false}
+                                                            />
                                                         ))}
                                                     </Stack>
                                                 )}
@@ -511,25 +665,62 @@ const Profile = () => {
     );
 };
 
-const SidebarButton = ({ active, children, onClick }) => {
+const SidebarButton = ({ active, children, ...props }) => {
     return (
         <Button
             fullWidth
-            onClick={onClick}
+            {...props}
+            sx={{
+                justifyContent: "flex-start",
+                textTransform: "none",
+                borderRadius: 999,
+                px: 2,
+                py: 1.2,
+                color: "#fff",
+                fontWeight: 600,
+                backgroundColor: active
+                    ? "rgba(140,90,255,0.22)"
+                    : "transparent",
+                border: active
+                    ? "1px solid rgba(140,90,255,0.38)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                "&:hover": {
+                    backgroundColor: active
+                        ? "rgba(140,90,255,0.28)"
+                        : "rgba(255,255,255,0.06)",
+                },
+            }}
+        >
+            {children}
+        </Button>
+    );
+};
+
+const SidebarSubButton = ({ active, children, ...props }) => {
+    return (
+        <Button
+            fullWidth
+            {...props}
             sx={{
                 justifyContent: "flex-start",
                 textTransform: "none",
                 borderRadius: 3,
                 px: 2,
-                py: 1.35,
+                py: 1.1,
+                pl: 2.2,
                 color: "#fff",
                 fontWeight: 600,
-                backgroundColor: active ? "rgba(140,90,255,0.22)" : "rgba(255,255,255,0.03)",
+                fontSize: 14,
+                backgroundColor: active
+                    ? "rgba(140,90,255,0.22)"
+                    : "rgba(255,255,255,0.03)",
                 border: active
                     ? "1px solid rgba(140,90,255,0.38)"
                     : "1px solid rgba(255,255,255,0.08)",
                 "&:hover": {
-                    backgroundColor: active ? "rgba(140,90,255,0.28)" : "rgba(255,255,255,0.06)",
+                    backgroundColor: active
+                        ? "rgba(140,90,255,0.28)"
+                        : "rgba(255,255,255,0.06)",
                 },
             }}
         >
@@ -583,7 +774,9 @@ const CountCard = ({ title, count }) => {
                 p: 2.4,
             }}
         >
-            <Typography sx={{ color: "rgba(255,255,255,0.64)", fontSize: 13, mb: 1 }}>
+            <Typography
+                sx={{ color: "rgba(255,255,255,0.64)", fontSize: 13, mb: 1 }}
+            >
                 {title}
             </Typography>
             <Typography sx={{ color: "#fff", fontSize: 28, fontWeight: 700 }}>
@@ -631,10 +824,7 @@ const EventCard = ({ event, showPaid }) => {
             </Typography>
 
             <Typography sx={{ color: "rgba(255,255,255,0.72)", mt: 0.8 }}>
-                Deadline:{" "}
-                {event.registrationDeadline
-                    ? new Date(event.registrationDeadline).toLocaleDateString()
-                    : "-"}
+                Deadline: {formatCustomDate(event.registrationDeadline)}
             </Typography>
 
             {showPaid && (

@@ -186,6 +186,33 @@ const SplitInfoSection = ({
 const EventRow = ({ event }) => {
   const isPaid = Number(event.amount || 0) > 0;
 
+  const formatEventDate = (value) => {
+    if (!value) return "-";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    const getOrdinal = (num) => {
+      if (num > 3 && num < 21) return `${num}th`;
+      switch (num % 10) {
+        case 1:
+          return `${num}st`;
+        case 2:
+          return `${num}nd`;
+        case 3:
+          return `${num}rd`;
+        default:
+          return `${num}th`;
+      }
+    };
+
+    return `${month}/${getOrdinal(day)}/${year}`;
+  };
+
   return (
     <Box
       sx={{
@@ -225,15 +252,8 @@ const EventRow = ({ event }) => {
               borderRadius: 999,
             }}
           />
-          <Typography
-            sx={{
-              color: "rgba(29,9,79,0.55)",
-              fontSize: 13,
-            }}
-          >
-            {event.registrationDeadline
-              ? new Date(event.registrationDeadline).toLocaleDateString()
-              : ""}
+          <Typography>
+            {formatEventDate(event.registrationDeadline)}
           </Typography>
         </Stack>
 

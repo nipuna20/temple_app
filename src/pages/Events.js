@@ -146,8 +146,37 @@ const Events = () => {
           ) : (
             filtered.map((event) => {
               const isPaid = Number(event.amount || 0) > 0;
+              const getOrdinalDay = (day) => {
+                if (day > 3 && day < 21) return `${day}th`;
+
+                switch (day % 10) {
+                  case 1:
+                    return `${day}st`;
+                  case 2:
+                    return `${day}nd`;
+                  case 3:
+                    return `${day}rd`;
+                  default:
+                    return `${day}th`;
+                }
+              };
+
+              const formatEventDate = (dateString) => {
+                if (!dateString) return "";
+
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return "";
+
+                const months = [
+                  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                ];
+
+                return `${months[date.getMonth()]}/${getOrdinalDay(date.getDate())}/${date.getFullYear()}`;
+              };
+
               const deadline = event.registrationDeadline
-                ? new Date(event.registrationDeadline).toLocaleDateString()
+                ? formatEventDate(event.registrationDeadline)
                 : "";
 
               return (
@@ -191,7 +220,7 @@ const Events = () => {
                           }}
                         />
                         <Typography sx={{ color: "rgba(255,255,255,0.70)", fontSize: 12 }}>
-                          {deadline ? `Deadline: ${deadline}` : ""}
+                          {deadline ? `Event Date: ${deadline}` : ""}
                         </Typography>
                       </Stack>
 
